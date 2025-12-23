@@ -1,13 +1,8 @@
-import express from "express";
+import { app } from "./app.js";
 
-const app = express();
 const PORT = "3000";
 
-// ได้แล้ว 1 endpoint
-// app.get('/', (req, res) => {
-//     res.send("Hello World!, I am your Server!");
-// });
-
+// 1st end point
 app.get('/', (req, res) => {
     res.send(`<!doctype html>
   <html lang="en">
@@ -39,6 +34,40 @@ app.get('/', (req, res) => {
       </main>
     </body>
   </html>`);
+});
+
+let users = [
+    { id: 1,
+      name: "Alice",
+      email: "alice@example.com",
+    }
+];
+
+// 2nd end point เกี่ยวกับการรับข้อมูล user ทุกคน ซึ่งเราจะไม่ getUser
+// (req, res) แม้จะไม่ได้ใช้สักอัน ยังไงก็ต้องประกาศอยู่ดี
+app.get("/users", (req, res) => {
+    res.status(200).json(users);
+});
+
+// 3rd end point
+// ถ้ามี user ใช้ POST มาที่เส้น /users แล้วตาม format ที่ให้มาคือ name, email มันจะทำการโพสต์ ซึ่งตอนนี้ยัง จนกว่าจะมีการติดต่อมา
+app.post("/users", (req, res) => {
+
+  // destructure
+  const {name, email} = req.body
+
+  const newUser = {
+    // แปลงเป็น String
+    id: String(users.length + 1),
+    name: name,
+    email: email,
+  };
+
+  // เอา newUser ใหม่ ใส่ใน array users เก่า
+  users.push(newUser);
+
+  // การสร้างข้อมูลใหม่สำเร็จ 201 (convention)
+  res.status(201).json(newUser);
 });
 
 app.listen(PORT, () => {

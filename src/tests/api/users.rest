@@ -1,0 +1,12 @@
+### This is a comment section
+### GET request to read all users
+GET http://localhost:3000/users
+
+### POST request to create a new users
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "name": "Bob",
+    "email": "bob@example.com"
+}
