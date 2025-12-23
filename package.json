@@ -1,0 +1,16 @@
+{
+  "name": "backend-express-app",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Pannnomaly",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
