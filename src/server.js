@@ -3,6 +3,7 @@ import { app } from "./app.js";
 const PORT = "3000";
 
 // 1st end point
+// middleware
 app.get('/', (req, res) => {
     res.send(`<!doctype html>
   <html lang="en">
@@ -37,20 +38,27 @@ app.get('/', (req, res) => {
 });
 
 let users = [
-    { id: 1,
+    { id: "1",
       name: "Alice",
       email: "alice@example.com",
+    },
+
+    { id: "2",
+      name: "Bob",
+      email: "Bob@example.com",
     }
 ];
 
 // 2nd end point เกี่ยวกับการรับข้อมูล user ทุกคน ซึ่งเราจะไม่ getUser
 // (req, res) แม้จะไม่ได้ใช้สักอัน ยังไงก็ต้องประกาศอยู่ดี
+// middleware
 app.get("/users", (req, res) => {
     res.status(200).json(users);
 });
 
 // 3rd end point
 // ถ้ามี user ใช้ POST มาที่เส้น /users แล้วตาม format ที่ให้มาคือ name, email มันจะทำการโพสต์ ซึ่งตอนนี้ยัง จนกว่าจะมีการติดต่อมา
+// middleware
 app.post("/users", (req, res) => {
 
   // destructure
@@ -68,6 +76,29 @@ app.post("/users", (req, res) => {
 
   // การสร้างข้อมูลใหม่สำเร็จ 201 (convention)
   res.status(201).json(newUser);
+});
+
+// 4th end point
+// middle
+// เกี่ยวกับการลบข้อมูล จาก url ที่ลงท้ายด้วย id ของ user นั้นๆ
+// route handler หรือ controller คือ function ที่ทำงานอยู่ใน endpoint
+app.delete("/users/:id", (req, res) => {
+    // ใช้ params เพื่อเอา id ออกมา
+    const userId = req.params.id;
+
+    // เข้าไปหา user id แต่ละอันใน arr ของ users
+    const userIndex = users.findIndex((user) => user.id === userId);
+
+    // ทำ error handling ในกรณีที่กดลบซ้ำ
+    if (userIndex !== -1)
+    {
+      // ไม่ใช่ -1 ให้ทำอะไร
+      users.splice(userIndex, 1);
+      // ตัดออกที่ userIndex ออกไป 1 ตัว
+      res.status(200).send(`User with ID ${userId} deleted successfully!`);
+    } else{
+      res.status(404).send("User not found!");
+    }
 });
 
 app.listen(PORT, () => {
