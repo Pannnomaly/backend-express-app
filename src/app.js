@@ -11,7 +11,7 @@ const corsOptions = {
         "http://localhost:5173",
             "http://localhost:5174",
                 "http://localhost:5175",
-                    "https://frontend-react-app-ecru.vercel.app/",
+                    "https://frontend-react-app-ecru.vercel.app",
                 // หรือ url ที่ vercel ให้เรามา เราก็จะเอามาใส่ตรงนี้แหละ เพื่อให้ FE ต่อ BE ได้
     ],
 };
