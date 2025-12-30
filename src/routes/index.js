@@ -5,5 +5,6 @@ import { router as v2Routes } from "./v2/index.js";
 export const router = Router();
 
 // เป็นการสร้างเส้นทางอันหนึ่ง
+// เป็น middleware ที่ซ้อน middleware อีกที (ซ้อน apiRoutes)
 router.use("/v1", v1Routes);
 router.use("/v2", v2Routes);

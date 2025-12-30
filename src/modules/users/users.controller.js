@@ -4,65 +4,12 @@
 import { users } from "../../mock-db/users.js";
 import { User } from "./users.model.js";
 
-// route handler: เอา id ของ user มาทีละ id จาก database
-export const getUser2 = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    
-    // หาจาก id ที่ละคน และไม่เอา password
-    const doc = await User.findById(id).select("-password");
-
-    // ถ้าไม่มี doc จะ . . .
-    if (!doc)
-    {
-      return res.status(404).json({
-        success: false,
-        error: `User ${id} not found!`,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: doc,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Failed to get a user!",
-    });
-  }
-};
-
+// API V1 🔴
 // ตั้งชื่อให้สื่อถึง action ที่จะเกิดขึ้น
 // export ออกไปใช้ที่ server
 // router handler: เรียก user แบบ mock
 export const getUsers1 = (req, res) => {
     res.status(200).json(users);
-};
-
-// router handler: เรียก user ใน database (ของจริงแล้ว)
-export const getUsers2 = async (req, res) => {
-
-  try {
-
-    // เรียก mongoose ไปหา user ทุกตัวที่อยู่ใน collection users
-    // แล้วไม่เอา password (-password) มาแสดงผล
-    const users = await User.find().select("-password");
-
-    // ส่งข้อความไป FE
-    return res.status(200).json({
-      // สำเร็จ
-      success: true,
-      // ส่ง users ที่เพิ่งได้มาออกไป FE
-      data: users,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Failed to get users. . .",
-    });
-  }
 };
 
 // route handler: ลบ user ใหม่แบบ mock
@@ -82,37 +29,6 @@ export const deleteUser1 = (req, res) => {
       res.status(200).send(`User with ID ${userId} deleted successfully!`);
     } else{
       res.status(404).send("User not found!");
-    }
-};
-// route handler: ลบ user ใน database (ของจริงแล้ว)
-export const deleteUser2 = async (req, res) => {
-    
-    // destructure
-    const { id } = req.params;
-
-    try {
-      
-      // หาโดย id และลบทิ้งไปเลย ก็จะเอา id ที่ต้องการจะลบไปใส่
-      const deleted = await User.findByIdAndDelete(id);
-
-      // ถ้า deleted ไม่มีจะทำอะไร
-      if (!deleted)
-      {
-        return res.status(404).json({
-          success: false,
-          error: `User ${id} not found!`,
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        data: null,
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        error: "Failed to delete user",
-      });
     }
 };
 
@@ -136,8 +52,113 @@ export const createUser1 = (req, res) => {
   res.status(201).json(newUser);
 };
 
+// API V2 🟢
+// route handler: เอา id ของ user มาทีละ id จาก database
+export const getUser2 = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    
+    // หาจาก id ที่ละคน และไม่เอา password
+    const doc = await User.findById(id).select("-password");
+
+    // ถ้าไม่มี doc จะ . . .
+    if (!doc)
+    {
+      // return res.status(404).json({
+      //   success: false,
+      //   error: `User ${id} not found!`,
+      // });
+
+      // จะต้องเรียก Error ใหม่ขึ้นมาก่อน เพราะเราทำ error handling นอก catch
+      const error = new Error("User not found");
+      // แต่ยังไม่ส่งให้ FE นะ จะส่งให้ middleware อื่นก่อน
+      return next(error);
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: doc,
+    });
+  } catch (error) {
+
+    error.status = 500;
+    error.name = error.name || "DatabaseError";
+    error.message = error.message || "Failed to get a user";
+    return next(error);
+  }
+};
+
+// router handler: เรียก user ใน database (ของจริงแล้ว)
+export const getUsers2 = async (req, res, next) => {
+
+  try {
+
+    // เรียก mongoose ไปหา user ทุกตัวที่อยู่ใน collection users
+    // แล้วไม่เอา password (-password) มาแสดงผล
+    const users = await User.find().select("-password");
+
+    // ส่งข้อความไป FE
+    return res.status(200).json({
+      // สำเร็จ
+      success: true,
+      // ส่ง users ที่เพิ่งได้มาออกไป FE
+      data: users,
+    });
+  } catch (error) {
+    // แบบเก่ามันจะไม่ส่งไปที่ centralized มันจะ handle แบบเจาะจงเฉพาะสายนั้น
+    // return res.status(500).json({
+    //   success: false,
+    //   error: "Failed to get users. . .",
+    // });
+
+    // ตั้งชื่อ error นี้
+    // error.name = error.name || "DatabaseError";
+    // ตั้ง status error นี้
+    // error.status = 500;
+    // ส่งไปที่ middleware อีกตัว อาจจะเป็น 404 error ที่เราเพิ่งสร้าง แล้วค่อยไป centralized
+    return next(error);
+  }
+};
+
+// route handler: ลบ user ใน database (ของจริงแล้ว)
+export const deleteUser2 = async (req, res, next) => {
+    
+    // destructure
+    const { id } = req.params;
+
+    try {
+      
+      // หาโดย id และลบทิ้งไปเลย ก็จะเอา id ที่ต้องการจะลบไปใส่
+      const deleted = await User.findByIdAndDelete(id);
+
+      // ถ้า deleted ไม่มีจะทำอะไร
+      if (!deleted)
+      {
+        // return res.status(404).json({
+        //   success: false,
+        //   error: `User ${id} not found!`,
+        // });
+
+        const error = new Error("User not found");
+        return next(error);
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: null,
+      });
+    } catch (error) {
+      // return res.status(500).json({
+      //   success: false,
+      //   error: "Failed to delete user",
+      // });
+      return next(error);
+    }
+};
+
 // router handler: สร้าง user ใหม่ใน database (อันนี้สร้างจริงๆ แล้ว)
-export const createUser2 = async (req, res) => {
+export const createUser2 = async (req, res, next) => {
   // desturcturing
   // จากหน้าบ้านที่ส่งมา
   const { username, email, password, role} = req.body;
@@ -147,11 +168,17 @@ export const createUser2 = async (req, res) => {
   {
     // เป็น convention ในการแจ้งผลของ http req ที่พลาด
     // design แบบ RESTful API คือ consistence และ predicable
-    return res.status(400).json({
+    // return res.status(400).json({
       // success: false = ไม่สำเร็จ
-      success: false,
-      error: "username, email, password, and role are required",
-    });
+      // success: false,
+      // error: "username, email, password, and role are required",
+    // });
+
+    // ต้องเรียก new Error เพราะเราทำนอก catch (catch มันเอามาใช้ได้เลย)
+    const error = new Error("username, email, password, and role are required");
+    error.name = "ValidationError";
+    error.status = 400;
+    return next(error);
   }
 
   try {
@@ -175,25 +202,39 @@ export const createUser2 = async (req, res) => {
     });
   } catch (error) {
     // เป็น code เฉพาะ ที่เราจะต้องไปดูเพิ่ม สำหรับ email เลย
+    // if (error.code === 11000)
+    // {
+    //   return res.status(409).json({
+    //     success: false,
+    //     error: "Email already in use!",
+    //   });
+    // }
+
     if (error.code === 11000)
     {
-      return res.status(409).json({
-        success: false,
-        error: "Email already in use!",
-      });
+      error.status = 409;
+      error.name = "DuplicateKeyError";
+      error.massage = "Email already in use";
     }
+    
+    // นอกเหนือจาก 11000
+    error.status = 500;
+    error.name = error.name || "DatabaseError";
+    error.massage = error.massage || "Failed to create a user";
+
+    return next(error);
 
     // error อื่นๆ ที่นอกเหนือจากนี้ เป็นความผิดของ backend เอง
     // internal error
-    return res.status(500).json({
-      success: false,
-      error: "Failed to create user. . .",
-    });
+    // return res.status(500).json({
+    //   success: false,
+    //   error: "Failed to create user. . .",
+    // });
   }
 };
 
 // router handler: ใช้อัพเดต user ใน database (ของจริง)
-export const updateUser2 = async (req, res) => {
+export const updateUser2 = async (req, res, next) => {
   
   // เอาแค่ id ใน url มา
   const { id } = req.params;
@@ -207,10 +248,13 @@ export const updateUser2 = async (req, res) => {
     // ถ้าไม่มี updated จะ. . .
     if (!updated)
     {
-      return res.status(404).json({
-        success: false,
-        error: `User ${id} not found!`,
-      });
+      // return res.status(404).json({
+      //   success: false,
+      //   error: `User ${id} not found!`,
+      // });
+
+      const error = new Error("User not found");
+      return next(error);
     }
 
     const safe = updated.toObject();
@@ -224,17 +268,21 @@ export const updateUser2 = async (req, res) => {
 
     if (error.code === 11000)
     {
-      return res.status(409).json({
-        success: false,
-        error: "Email already in use!",
-      });
+      // return res.status(409).json({
+      //   success: false,
+      //   error: "Email already in use!",
+      // });
+
+      return next(error);
     }
+
+    return next(error);
 
     // error อื่นๆ ที่นอกเหนือจากนี้ เป็นความผิดของ backend เอง
     // internal error
-    return res.status(500).json({
-      success: false,
-      error: "Failed to update user. . .",
-    });
+    // return res.status(500).json({
+    //   success: false,
+    //   error: "Failed to update user. . .",
+    // });
   }
 };

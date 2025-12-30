@@ -3,7 +3,8 @@ import { createUser2, deleteUser2, getUser2, getUsers2, updateUser2 } from "../.
 
 export const router = Router();
 
-
+// middleware router แบบ endpoint
+// error handling ทั้งหลาย เราจะเอามาลงที่นี่
 
 // 1st end point เกี่ยวกับการรับข้อมูล user ทุกคน ซึ่งเราจะไม่ getUser
 router.get("/", getUsers2);

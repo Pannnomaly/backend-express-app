@@ -5,6 +5,8 @@ import { router as apiRoutes } from "./routes/index.js";
 
 export const app = express();
 
+// ที่นี่เอาไว้ติดตั้ง middleware req มาจะเข้าตามลำดับของ middleware ที่เราเขียนไว้
+
 const corsOptions = {
     origin: [
         // เก็บสถานที่ที่อนุญาติให้ติดต่อกับ BE ของเราได้ (กรอก url ของ FE ลงไป)
@@ -26,3 +28,38 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api", apiRoutes);
+
+// Catch-all for 404 not found (ยังไม่ใช่ centralized middleware)
+// next คือ build-in method ที่ใช้ในการส่งของที่ middleware หนึ่งทำเสร็จแล้ว เตรียมจะส่งให้ middleware อีกอัน
+app.use((req, res, next) => {
+    // เป็นการเรียก build-in object ของ JS มาใช้งาน (เป็น class แบบ OOP) คือเราไม่ได้สร้าง Error นี้ขึ้นมาเอง เราแค่เรียกมาใช้งานเฉยๆ
+    // method อะไรที่ FE ส่งมา กับ originalURL endpoint อะไรที่ FE ส่งมา ว่ามันน error ตรงไหน ซึ่งมันคือ key ที่มีอยู่แล้ว
+    const error = new Error(`Not found: ${req.method} ${req.originalUrl}`);
+    // name คือชื่อของ error ชนิดนั้น
+    // มันคือการตั้งชื่อให้ error ชนิดนี้นั่นแหละ = NotFoundError
+    error.name = error.name || "NotFoundError";
+    // ตั้ง status ให้ error นี้
+    error.status = error.status || 404;
+    // จะทำการส่ง error นี้ ไปให้ middleware ที่จะจัดการเกี่ยวกับ error ต่อไป
+    // ใช้ method next ในการส่ง error ออกไป
+    next(error);
+});
+
+// Centralized Error Handling Middleware (ศูนย์รวมของ error ทั้งหมด)
+// err, req, res, next เป็นชื่อที่ express ตั้งเอาไว้แล้ว ให้ express รู้
+// err คือให้ express รู้ว่ากำลังจะทำ Centralized
+app.use((err, req, res, next) => {
+    // เหมือน .log แต่ออกแบบมาเพื่ออ่าน error
+    // stack เอาไว้ดู error message ใน server ของเราได้ ถ้ามันมีนะ
+    // stack
+    console.error(err.stack);
+    // มี status ของ error นั้นไหม ถ้าไม่มีก็เอา 500 (internal server error)
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        path: req.originalUrl,
+        method: req.method,
+        timestamp: new Date().toISOString(),
+        stack: err.stack,
+    });
+});
