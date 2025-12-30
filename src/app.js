@@ -27,6 +27,10 @@ app.use(cors(corsOptions));
 // อ่าน .json ที่ req ส่งมา มันคือ 1 ใน middleware
 app.use(express.json());
 
+app.get("/", (req, res) => {
+    res.send("Hello, World!");
+});
+
 app.use("/api", apiRoutes);
 
 // Catch-all for 404 not found (ยังไม่ใช่ centralized middleware)
