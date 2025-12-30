@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 // a data model is created from a data schema
 
@@ -25,6 +26,19 @@ const userSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// ก่อนจะส่งเข้า DB จะให้ทำอะไรบ้าง
+// save = event หนึ่ง
+// Hash password before saving
+userSchema.pre("save", async function () {
+    // ตรวจสอบ password ที่ได้รับมา ถ้าไม่มีการเปลี่ยนแปลง จะให้. . .
+    if (!this.isModified("password")) return;
+
+    // ถ้า password มีการเปลี่ยนแปลง
+    // เรียก method มาทำการ hashpassword
+    // เข้ารหัส 10 รอบ (cross factor) ตือกำลังดีเลย
+    this.password = await bcrypt.hash(this.password, 10);
+});
 
 // เป็น model ของ user
 // เป็นชื่อที่คล้องจองกับ collection ซึ่งมันจะไปสร้าง collection ชื่อ users เอง (ถ้าเรายังไม่เคยสร้างมาก่อนนะ) คือมันจะรู้ของมันเองเลย
