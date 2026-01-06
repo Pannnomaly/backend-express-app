@@ -2,9 +2,22 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { router as apiRoutes } from "./routes/index.js";
+import { limiter } from "./middlewares/rateLimiter.js";
+
+// การเจอ middleware จะเข้าเรียงตามลำดับเลย
 
 export const app = express();
+
+// ต้องมีเพราะจะทำให้ limiter ทำงานได้ (คือไม่มีไม่ได้)
+// ให้เชื่อ ip ที่เป็นตัวแทน เช่น vercel ที่เรา deploy
+app.set("trust proxy", 1);
+
+// global middleware
+// ทำให้ BE ของเรามีความปลอดภัยมากขึ้น
+// ติดตั้งแค่นี้ก็คือจบเลย
+app.use(helmet());
 
 // ที่นี่เอาไว้ติดตั้ง middleware req มาจะเข้าตามลำดับของ middleware ที่เราเขียนไว้
 
@@ -26,6 +39,8 @@ const corsOptions = {
 // เราจะใช้ cors ในการบอกกับ BE ว่า ให้ยอมรับการติดต่อมาจากต่าง origin เช่น ต่าง port ต่างเครื่อง
 // ติดต่อมาจาก origin ที่เราอนุญาตหรือเปล่า
 app.use(cors(corsOptions));
+
+app.use(limiter);
 
 // อ่าน .json ที่ req ส่งมา มันคือ 1 ใน middleware
 app.use(express.json());
