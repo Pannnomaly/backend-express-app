@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema(
 // ก่อนจะส่งเข้า DB จะให้ทำอะไรบ้าง
 // save = event หนึ่ง
 // Hash password before saving
+// hash คือ lock ลืม ไม่สามารถทำกลับมาได้ เพราะมันไม่มี salt
 userSchema.pre("save", async function () {
     // ตรวจสอบ password ที่ได้รับมา ถ้าไม่มีการเปลี่ยนแปลง จะให้. . .
     if (!this.isModified("password")) return;

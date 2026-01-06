@@ -1,6 +1,7 @@
 // ไฟล์ app เอาไว้ติดตั้ง middleware
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { router as apiRoutes } from "./routes/index.js";
 
 export const app = express();
@@ -16,6 +17,8 @@ const corsOptions = {
                     "https://frontend-react-app-ecru.vercel.app",
                 // หรือ url ที่ vercel ให้เรามา เราก็จะเอามาใส่ตรงนี้แหละ เพื่อให้ FE ต่อ BE ได้
     ],
+    // ให้ cookie สามารถส่งได้ จาก FE ไป BE ใน req ถัดๆ ไป
+    credentials: true,
 };
 
 // .use เพื่อการติดตั้ง middleware
@@ -26,6 +29,9 @@ app.use(cors(corsOptions));
 
 // อ่าน .json ที่ req ส่งมา มันคือ 1 ใน middleware
 app.use(express.json());
+
+// parse cookie เพื่อให้ backend ไปอ่านได้
+app.use(cookieParser());
 
 app.get("/", (req, res) => {
     res.send("Hello, World!");
