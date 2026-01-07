@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createUser2, deleteUser2, getUser2, getUsers2, updateUser2 } from "../../modules/users/users.controller.js";
+import { askUsers2, createUser2, deleteUser2, getUser2, getUsers2, updateUser2 } from "../../modules/users/users.controller.js";
 import { User } from "../../modules/users/users.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -12,6 +12,41 @@ export const router = Router();
 
 // 1st end point เกี่ยวกับการรับข้อมูล user ทุกคน ซึ่งเราจะไม่ getUser
 router.get("/", getUsers2);
+
+// Check user authentication (check if user has valid token)
+// มีการติดตั้ง custom middleware ด้วย
+// ถ้าเกิด error จะเกิดที่ authUser คือจะไม่ผ่าน req ไปถึง async
+router.get("/auth/cookie/me", authUser, async (req, res, next) => {
+    try {
+        
+        const userId = req.user.user._id;
+
+        const user = await User.findById(userId);
+
+        // ถ้าไม่มี user
+        if (!user)
+        {
+            return res.status(401).json({
+                error: true,
+                message: "Unauthenticated"
+            });
+        }
+
+        res.status(200).json({
+            error: false,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.post("/auth/ai/ask", authUser, askUsers2);
 
 // 2nd end point
 router.get("/:id", getUser2)
@@ -149,37 +184,4 @@ router.post("/auth/cookie/logout", (req, res) => {
         error: false,
         message: "Logged out successfully!"
     });
-});
-
-// Check user authentication (check if user has valid token)
-// มีการติดตั้ง custom middleware ด้วย
-// ถ้าเกิด error จะเกิดที่ authUser คือจะไม่ผ่าน req ไปถึง async
-router.get("/auth/cookie/me", authUser, async (req, res, next) => {
-    try {
-        
-        const userId = req.user.user._id;
-
-        const user = await User.findById(userId);
-
-        // ถ้าไม่มี user
-        if (!user)
-        {
-            return res.status(401).json({
-                error: true,
-                message: "Unauthenticated"
-            });
-        }
-
-        res.status(200).json({
-            error: false,
-            user: {
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
 });
