@@ -124,7 +124,7 @@ export const generateText = async ({
   // ค่าใน model จะถูกแปลงเป็น ค่าที่ถูกต้อง ในการเอามาทำเป็น URL เป็น defensive
   const url = `${baseUrl}/v1beta/models/${encodeURIComponent(
     model
-  )}:embedContent?key=${encodeURIComponent(apiKey)}`;
+  )}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   const { data } = await axios.post(
     url,

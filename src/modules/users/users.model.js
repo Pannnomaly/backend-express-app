@@ -21,6 +21,22 @@ const userSchema = new mongoose.Schema(
         // select: false คือตอนที่เราเขียน query มาเพื่อดูการแสดงผลค่าต่างๆ มันจะไม่มาด้วย คือไม่ถูกเลือกนั่นแหละ เพื่อความปลอดภัย
         // แต่ username, role และ email ยังแสดงผลอยู่
         password: {type: String, required: true, minlength: 6, select: false},
+        embedding: {
+            // field แรก
+            status: {
+                type: String,
+                // enum คือ options ที่ set ไว้
+                enum: ["PENDING", "PROCESSING", "READY", "FAILED"],
+                default: "PENDING",
+            },
+            // field ถัดๆ ไป
+            dims: {type: Number, default: 3072},
+            vector: {type: [Number], select: false},
+            attempts: {type: Number, default: 0},
+            lastAttemptAt: {type: Date, default: null},
+            updatedAt: {type: Date, default: null},
+            lastError: {type: String, default: null},
+        },
     },
     {
         timestamps: true,

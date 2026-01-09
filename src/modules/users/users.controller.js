@@ -3,6 +3,7 @@
 
 import { users } from "../../mock-db/users.js";
 import { embedText, generateText } from "../../services/gemini.client.js";
+import { queueEmbedUserById } from "./users.embedding.js";
 import { User } from "./users.model.js";
 
 // API V1 🔴
@@ -196,6 +197,8 @@ export const createUser2 = async (req, res, next) => {
     // ลบ password ออกจาก safe
     delete safe.password;
 
+    queueEmbedUserById(doc._id);
+
     return res.status(201).json({
       success: true,
       // เอา data ชื่อ safe return ออกไปแสดงผล
@@ -319,7 +322,7 @@ export const askUsers2 = async (req, res, next) => {
     // แปลงเป็น vector embedding
     const queryVector = await embedText({text: trimmed});
 
-    const indexName = "user_embedding_vector_index";
+    const indexName = "users_embedding_vector_index";
 
     // เลขของ mongoDB document ที่ควรจะต้องรวบรวมก่อนส่งให้ LLM กี่ document ก่อนที่จะเลือกอันที่เหมาะสมที่สุด แล้วส่งให้ LLM
     const numCandidates = Math.max(50, limit * 10); // ไม่ 50 ก็ limit * 10 อันไหนมากกว่าก็จะเอาอันนั้นแหละ
